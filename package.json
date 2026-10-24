@@ -1,0 +1,22 @@
+{
+  "name": "eotne",
+  "version": "0.7.0",
+  "description": "Eotne Browser",
+  "author": "xiaotian",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.xiaotian.eotne",
+    "productName": "Eotne",
+    "win": {
+      "target": "nsis"
+    }
+  }
+}

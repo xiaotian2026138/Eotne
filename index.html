@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Eotne 0.7.0</title>
+    <title>Eotne 0.7.1</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: "Microsoft YaHei", sans-serif; overflow: hidden; }
@@ -174,7 +174,6 @@
             reload: () => ipcRenderer.send('reload'),
             newTab: (url) => ipcRenderer.send('new-tab', url),
             closeTab: (id) => ipcRenderer.send('close-tab', id),
-            forceCloseTab: (id) => ipcRenderer.send('force-close-tab', id),
             switchTab: (id) => ipcRenderer.send('switch-tab', id),
             addBookmark: (title, url) => ipcRenderer.send('add-bookmark', title, url),
             getBookmarks: () => ipcRenderer.send('get-bookmarks'),
@@ -183,9 +182,9 @@
             clearHistory: () => ipcRenderer.send('clear-history'),
             getDownloads: () => ipcRenderer.send('get-downloads'),
             openFile: (p) => ipcRenderer.send('open-file', p),
-            deleteFile: (n) => ipcRenderer.send('delete-file', n),
-            restoreFile: (n) => ipcRenderer.send('restore-file', n),
-            permDeleteFile: (n) => ipcRenderer.send('perm-delete-file', n),
+            deleteFile: (id) => ipcRenderer.send('delete-file', id),
+            restoreFile: (id) => ipcRenderer.send('restore-file', id),
+            permDeleteFile: (id) => ipcRenderer.send('perm-delete-file', id),
             openDevTools: () => ipcRenderer.send('open-dev-tools'),
             
             onURLChange: (callback) => ipcRenderer.on('url-changed', (event, url) => callback(url)),
@@ -198,8 +197,7 @@
             onDownloadSuccess: (callback) => ipcRenderer.on('download-success', (event, data) => callback(data)),
             onDownloadFailed: (callback) => ipcRenderer.on('download-failed', (event, data) => callback(data)),
             onOpenFail: (callback) => ipcRenderer.on('open-fail', (event, msg) => callback(msg)),
-            onBookmarkTip: (callback) => ipcRenderer.on('bookmark-tip', (event, msg) => callback(msg)),
-            onAskCloseTabWithDownload: (callback) => ipcRenderer.on('ask-close-tab-with-download', (event, id) => callback(id))
+            onBookmarkTip: (callback) => ipcRenderer.on('bookmark-tip', (event, msg) => callback(msg))
         };
 
         const url = document.getElementById('url');
@@ -279,6 +277,21 @@
             renderDownloads();
         }
 
+        // 弹窗二次确认（全中文优化）
+        function confirmDelete(id) {
+            modal('移至回收站', '确认要将此下载记录移至回收站吗？', [
+                { text: '确认', action: () => { window.electronAPI.deleteFile(id); closeModal(); } },
+                { text: '取消', action: closeModal }
+            ]);
+        }
+
+        function confirmPermDelete(id) {
+            modal('永久删除', '确认要永久删除该记录吗？', [
+                { text: '永久删除', action: () => { window.electronAPI.permDeleteFile(id); closeModal(); } },
+                { text: '取消', action: closeModal }
+            ]);
+        }
+
         function renderDownloads() {
             const list = document.getElementById('downloads-list');
             let items;
@@ -319,20 +332,6 @@
                     '<button onclick="confirmDelete(\'' + d.id + '\')">删除</button>' +
                     '</div>';
             }).join('');
-        }
-
-        function confirmDelete(id) {
-            modal('移至回收站', '是否将文件移至回收站？<br><br>30 天后文件将永久删除，不可找回。', [
-                { text: 'Yes', action: () => { window.electronAPI.deleteFile(id); closeModal(); } },
-                { text: 'No', action: closeModal }
-            ]);
-        }
-
-        function confirmPermDelete(id) {
-            modal('永久删除', '是否永久删除此文件？<br><br>此操作不可恢复。', [
-                { text: 'Yes', action: () => { window.electronAPI.permDeleteFile(id); closeModal(); } },
-                { text: 'No', action: closeModal }
-            ]);
         }
 
         function renderHistory(data) {
@@ -466,7 +465,7 @@
                 }
             };
 
-            const btnCancel = { text: 'Cancel', action: closeModal };
+            const btnCancel = { text: '取消', action: closeModal };
 
             const btns = isFixed ? [btnOk, btnCancel] : [
                 btnOk,
@@ -493,7 +492,7 @@
             `;
             modal('重命名快捷方式', bodyHTML, [
                 { 
-                    text: 'Ok', 
+                    text: '确定', 
                     action: () => { 
                         const newName = document.getElementById('rename-input').value.trim();
                         if (newName) {
@@ -504,7 +503,7 @@
                         closeModal(); 
                     } 
                 },
-                { text: 'Cancel', action: closeModal }
+                { text: '取消', action: closeModal }
             ]);
         }
 
@@ -525,7 +524,7 @@
 
             modal('添加快捷方式', bodyHTML, [
                 { 
-                    text: 'Ok', 
+                    text: '确定', 
                     action: () => { 
                         const name = document.getElementById('sc-name-input').value.trim();
                         let url = document.getElementById('sc-url-input').value.trim();
@@ -553,7 +552,7 @@
                             });
                     } 
                 },
-                { text: 'Cancel', action: closeModal }
+                { text: '取消', action: closeModal }
             ]);
         }
 
@@ -593,7 +592,7 @@
                             const nameVal = document.getElementById('bm-name-input').value.trim();
                             const urlVal = document.getElementById('bm-url-input').value.trim();
                             if (!urlVal) {
-                                modal('提示', '网址不能为空', [{ text: '确定', action: closeModal }]);
+                                modal('提示', '请输入有效的网址。', [{ text: '好的', action: closeModal }]);
                                 return;
                             }
                             window.electronAPI.addBookmark(nameVal || urlVal, urlVal); 
@@ -620,26 +619,6 @@
                 else closeAllPages();
             });
 
-            window.electronAPI.onAskCloseTabWithDownload(() => {
-                modal('检测到网页关闭', '是否继续在后台下载？', [
-                    { 
-                        text: 'Ok', 
-                        action: () => {
-                            closeModal();
-                            modal('已继续在后台中下载', '下载完成后将文件放置下载管理', [
-                                { text: 'Cancel', action: closeModal }
-                            ]);
-                        } 
-                    },
-                    { 
-                        text: 'Cancel', 
-                        action: () => {
-                            closeModal();
-                        } 
-                    }
-                ]);
-            });
-
             window.electronAPI.onTabUpdate((tabs) => {
                 renderTabs(tabs);
                 const currentUrl = document.getElementById('url').value;
@@ -664,7 +643,7 @@
             window.electronAPI.onDownloadProgress((data) => {
                 if (!dlProgressOpen) {
                     dlProgressOpen = true;
-                    modal('正在下载中，请勿关闭', '文件：' + data.filename + '<br>进度：' + data.progress + '%', [{ text: 'Cancel', action: () => { dlProgressOpen = false; closeModal(); } }]);
+                    modal('正在下载', '文件：' + data.filename + '<br>进度：' + data.progress + '%', [{ text: '隐藏', action: () => { dlProgressOpen = false; closeModal(); } }]);
                 } else {
                     const body = document.getElementById('modal-body');
                     if (body) body.innerHTML = '文件：' + data.filename + '<br>进度：' + data.progress + '%';
@@ -674,14 +653,14 @@
             window.electronAPI.onDownloadSuccess((data) => {
                 dlProgressOpen = false;
                 modal('下载成功', '文件已保存至：<br>' + data.path, [
-                    { text: 'Ok', action: closeModal },
-                    { text: 'Browse', action: () => { window.electronAPI.openFile(data.path); closeModal(); } }
+                    { text: '确定', action: closeModal },
+                    { text: '打开文件', action: () => { window.electronAPI.openFile(data.path); closeModal(); } }
                 ]);
             });
 
             window.electronAPI.onDownloadFailed((data) => {
                 dlProgressOpen = false;
-                modal('下载失败', '下载失败，已中断。<br>原因：' + data.error, [{ text: 'Cancel', action: closeModal }]);
+                modal('下载失败', '下载未能完成，原因：' + data.error, [{ text: '关闭', action: closeModal }]);
             });
 
             window.electronAPI.onOpenFail((msg) => {
@@ -689,7 +668,7 @@
             });
 
             window.electronAPI.onBookmarkTip((msg) => {
-                modal('提示', msg, [{ text: '确定', action: closeModal }]);
+                modal('提示', msg, [{ text: '好的', action: closeModal }]);
             });
 
             window.electronAPI.onShowError((data) => {

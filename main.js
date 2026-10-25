@@ -181,6 +181,9 @@ function newTab(url) {
             if (errKey) errInfo = errorData['未知错误'];
             else return;
         }
+
+      view.setBounds({ x: 0, y: 80, width: 0, height: 0 });
+
         if (win && !win.isDestroyed()) {
             win.webContents.send('show-error', {
                 title: errInfo.title, code: errKey || code, reason: errInfo.reasons.join(';'), advice: errInfo.advice, url: u

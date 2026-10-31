@@ -1,688 +1,771 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <title>Eotne 0.7.1</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: "Microsoft YaHei", sans-serif; overflow: hidden; }
+	<meta charset="UTF-8">
+	<title>Eotne 0.8.0</title>
+	<style>
+		* { margin: 0; padding: 0; box-sizing: border-box; }
+		body { font-family: "Microsoft YaHei", sans-serif; overflow: hidden; }
 
-        #tabbar { display: flex; align-items: center; background: #e8e8e8; border-bottom: 1px solid #ccc; height: 32px; overflow-x: auto; padding-left: 4px; }
-        .tab { display: flex; align-items: center; padding: 0 10px; height: 30px; margin: 1px 2px 0 2px; background: #f5f5f5; border: 1px solid #ccc; border-bottom: none; border-radius: 4px 4px 0 0; font-size: 12px; cursor: pointer; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
-        .tab.active { background: #fff; }
-        .tab .close { margin-left: 8px; color: #888; cursor: pointer; }
-        #newtab { margin-left: 4px; width: 24px; height: 24px; border: 1px solid #ccc; background: #fff; border-radius: 3px; cursor: pointer; }
+		/* ================= 0.8 新增：无痕模式（暗黑主题） ================= */
+		body.incognito { background: #1e1e1e !important; }
+		body.incognito #tabbar, body.incognito #toolbar { background: #2d2d2d !important; border-color: #444 !important; }
+		body.incognito .tab { background: #3c3c3c !important; color: #ccc !important; border-color: #444 !important; }
+		body.incognito .tab.active { background: #1e1e1e !important; color: #fff !important; }
+		body.incognito #url, body.incognito #toolbar button { background: #1e1e1e !important; color: #eee !important; border-color: #444 !important; }
+		body.incognito #newtab-page, body.incognito .page { background: #1e1e1e !important; }
+		body.incognito #clock { color: #fff !important; }
+		body.incognito .shortcut div, body.incognito .page-header h2, body.incognito .item a, body.incognito .history-group h3 { color: #eee !important; }
+		body.incognito .item, body.incognito .history-group h3 { border-color: #444 !important; }
 
-        #toolbar { display: flex; align-items: center; padding: 6px 8px; background: #f5f5f5; border-bottom: 1px solid #ccc; height: 41px; }
-        #toolbar button { height: 28px; margin-right: 4px; padding: 0 10px; border: 1px solid #ccc; background: #fff; border-radius: 3px; cursor: pointer; font-size: 13px; }
-        #url { flex: 1; height: 28px; margin: 0 4px; padding: 0 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; outline: none; }
+		/* ================= 基础 UI ================= */
+		#tabbar { display: flex; align-items: center; background: #e8e8e8; border-bottom: 1px solid #ccc; height: 32px; overflow-x: auto; padding-left: 4px; }
+		.tab { display: flex; align-items: center; padding: 0 10px; height: 30px; margin: 1px 2px 0 2px; background: #f5f5f5; border: 1px solid #ccc; border-bottom: none; border-radius: 4px 4px 0 0; font-size: 12px; cursor: pointer; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+		.tab.active { background: #fff; }
+		.tab .close { margin-left: 8px; color: #888; cursor: pointer; }
+		#newtab { margin-left: 4px; width: 24px; height: 24px; border: 1px solid #ccc; background: #fff; border-radius: 3px; cursor: pointer; }
 
-        .page { display: none; position: absolute; top: 73px; left: 0; right: 0; bottom: 0; background: #fff; padding: 20px; overflow-y: auto; }
-        .item { padding: 8px; border-bottom: 1px solid #eee; font-size: 13px; }
-        .item a { color: #3b7ddd; text-decoration: none; }
-        .empty { color: #888; font-size: 13px; text-align: center; margin-top: 20px; }
+		#toolbar { display: flex; align-items: center; padding: 6px 8px; background: #f5f5f5; border-bottom: 1px solid #ccc; height: 41px; }
+		#toolbar button { height: 28px; margin-right: 4px; padding: 0 10px; border: 1px solid #ccc; background: #fff; border-radius: 3px; cursor: pointer; font-size: 13px; }
+		#url { flex: 1; height: 28px; margin: 0 4px; padding: 0 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; outline: none; }
 
-        #newtab-page { display: block; position: absolute; top: 73px; left: 0; right: 0; bottom: 0; background: #fff; padding: 60px 20px; text-align: center; z-index: 10; }
-        #clock { font-size: 48px; color: #333; margin-bottom: 60px; }
-        #shortcuts { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; }
-        
-        .shortcut { width: 100px; cursor: pointer; text-align: center; position: relative; -webkit-user-select: none; user-select: none; }
-        
-        .icon-container { width: 48px; height: 48px; margin: 0 auto 10px auto; display: flex; justify-content: center; align-items: center; }
-        .icon-container img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
-        .icon-text { font-size: 20px; font-weight: bold; color: #3b7ddd; pointer-events: none; }
-        
-        .shortcut div { font-size: 14px; color: #333; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
+		.page { display: none; position: absolute; top: 73px; left: 0; right: 0; bottom: 0; background: #fff; padding: 20px; overflow-y: auto; }
+		.item { padding: 8px; border-bottom: 1px solid #eee; font-size: 13px; }
+		.item a { color: #3b7ddd; text-decoration: none; }
+		.empty { color: #888; font-size: 13px; text-align: center; margin-top: 20px; }
 
-        .download-tabs { display: flex; margin-bottom: 14px; border-bottom: 1px solid #ccc; }
-        .download-tabs div { padding: 8px 16px; cursor: pointer; font-size: 13px; }
-        .download-tabs div.active { border-bottom: 2px solid #3b7ddd; color: #3b7ddd; }
+		#newtab-page { display: block; position: absolute; top: 73px; left: 0; right: 0; bottom: 0; background: #fff; padding: 60px 20px; text-align: center; z-index: 10; }
+		
+		/* 时钟加入 pointer 提示可长按 */
+		#clock { font-size: 48px; color: #333; margin-bottom: 60px; cursor: pointer; user-select: none; display: inline-block; padding: 10px; }
+		
+		#shortcuts { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; }
+		.shortcut { width: 100px; cursor: pointer; text-align: center; position: relative; -webkit-user-select: none; user-select: none; }
+		.icon-container { width: 48px; height: 48px; margin: 0 auto 10px auto; display: flex; justify-content: center; align-items: center; }
+		.icon-container img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+		.icon-text { font-size: 20px; font-weight: bold; color: #3b7ddd; pointer-events: none; }
+		.shortcut div { font-size: 14px; color: #333; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
 
-        .file-box { border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin-bottom: 10px; font-size: 13px; }
-        .file-box .name { font-weight: bold; margin-bottom: 6px; }
-        .file-box .size, .file-box .time, .file-box .status { color: #666; font-size: 12px; margin-bottom: 4px; }
-        .file-box button { margin-right: 6px; margin-top: 6px; padding: 4px 10px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 3px; cursor: pointer; font-size: 12px; }
+		.download-tabs { display: flex; margin-bottom: 14px; border-bottom: 1px solid #ccc; }
+		.download-tabs div { padding: 8px 16px; cursor: pointer; font-size: 13px; }
+		.download-tabs div.active { border-bottom: 2px solid #3b7ddd; color: #3b7ddd; }
+		.file-box { border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin-bottom: 10px; font-size: 13px; }
+		.file-box .name { font-weight: bold; margin-bottom: 6px; }
+		.file-box .size, .file-box .time, .file-box .status { color: #666; font-size: 12px; margin-bottom: 4px; }
+		.file-box button { margin-right: 6px; margin-top: 6px; padding: 4px 10px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 3px; cursor: pointer; font-size: 12px; }
 
-        .history-group { margin-bottom: 20px; }
-        .history-group h3 { font-size: 14px; color: #666; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #eee; }
-        .history-item { padding: 6px 0; font-size: 13px; display: flex; justify-content: space-between; cursor: pointer; }
-        .history-item:hover { background: #f9f9f9; }
-        .history-note { color: #aaa; font-size: 12px; margin-top: 20px; text-align: center; }
+		.history-group { margin-bottom: 20px; }
+		.history-group h3 { font-size: 14px; color: #666; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #eee; }
+		.history-item { padding: 6px 0; font-size: 13px; display: flex; justify-content: space-between; cursor: pointer; }
+		.history-item:hover { background: #f9f9f9; }
+		.history-note { color: #aaa; font-size: 12px; margin-top: 20px; text-align: center; }
 
-        #error-page { display: none; position: absolute; top: 73px; left: 0; right: 0; bottom: 0; background: #fff; padding: 40px 48px; overflow-y: auto; z-index: 10; }
-        #error-page .title { font-size: 20px; font-weight: bold; margin-bottom: 20px; }
-        #error-page .code { font-size: 14px; color: #d33; margin-bottom: 20px; }
-        #error-page .reason { font-size: 14px; margin-bottom: 10px; }
-        #error-page .advice { font-size: 13px; color: #666; margin-bottom: 10px; }
-        #error-page .url { font-size: 13px; color: #666; margin: 20px 0; word-break: break-all; }
-        #error-page button { margin-right: 10px; padding: 6px 16px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 3px; cursor: pointer; }
+		#error-page { display: none; position: absolute; top: 73px; left: 0; right: 0; bottom: 0; background: #fff; padding: 40px 48px; overflow-y: auto; z-index: 9999; }
+		#error-page .title { font-size: 20px; font-weight: bold; margin-bottom: 20px; color: #333; }
+		#error-page .code { font-size: 14px; color: #d33; margin-bottom: 20px; }
+		#error-page .reason { font-size: 14px; margin-bottom: 10px; color: #333; }
+		#error-page .advice { font-size: 13px; color: #666; margin-bottom: 10px; }
+		#error-page .url { font-size: 13px; color: #666; margin: 20px 0; word-break: break-all; }
+		#error-page button { margin-right: 10px; padding: 6px 16px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 3px; cursor: pointer; font-size: 13px; color: #333; }
 
-        #modal-mask { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 9999; justify-content: center; align-items: center; }
-        .modal { background: #fff; border-radius: 6px; padding: 20px 24px; min-width: 320px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); font-size: 14px; }
-        .modal .modal-title { font-size: 15px; font-weight: bold; margin-bottom: 12px; }
-        .modal .modal-body { margin-bottom: 16px; line-height: 1.7; color: #444; }
-        .modal .modal-buttons { text-align: right; }
-        .modal .modal-buttons button { margin-left: 8px; padding: 5px 14px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 3px; cursor: pointer; }
-        .modal .modal-buttons button:hover { background: #e8e8e8; }
-        
-        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-        .page-header h2 { margin: 0; font-size: 16px; }
-        .btn-close-page { color: #666; text-decoration: none; font-size: 13px; }
-        .btn-close-page:hover { color: #d33; }
-        
-        #add-shortcut-btn { display: inline-block; width: 48px; height: 48px; line-height: 44px; border-radius: 50%; background: #f0f0f0; color: #888; font-size: 24px; text-decoration: none; transition: 0.2s; }
-        #add-shortcut-btn:hover { background: #e0e0e0; }
-    </style>
+		#modal-mask { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 99999; justify-content: center; align-items: center; }
+		.modal { background: #fff; border-radius: 6px; padding: 20px 24px; min-width: 320px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); font-size: 14px; }
+		.modal .modal-title { font-size: 15px; font-weight: bold; margin-bottom: 12px; color: #333; }
+		.modal .modal-body { margin-bottom: 16px; line-height: 1.7; color: #444; }
+		.modal .modal-buttons { text-align: right; }
+		.modal .modal-buttons button { margin-left: 8px; padding: 5px 14px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 3px; cursor: pointer; color: #333; }
+		
+		.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+		.page-header h2 { margin: 0; font-size: 16px; color: #333; }
+		.btn-close-page { color: #666; text-decoration: none; font-size: 13px; }
+		.btn-close-page:hover { color: #d33; }
+		
+		#add-shortcut-btn { display: inline-block; width: 48px; height: 48px; line-height: 44px; border-radius: 50%; background: #f0f0f0; color: #888; font-size: 24px; text-decoration: none; transition: 0.2s; }
+		#add-shortcut-btn:hover { background: #e0e0e0; }
+	</style>
 </head>
 <body>
-    <div id="tabbar">
-        <div id="newtab">+</div>
-    </div>
+	<div id="tabbar">
+		<div id="newtab">+</div>
+	</div>
 
-    <div id="toolbar">
-        <button id="btn-back">←</button>
-        <button id="btn-forward">→</button>
-        <button id="btn-reload">⟳</button>
-        <button id="btn-home">⌂</button>
-        <input id="url" placeholder="搜索或输入网址...">
-        <button id="btn-go">前往</button>
-        <button id="btn-bookmarks">☆</button>
-        <button id="btn-history">◷</button>
-        <button id="btn-downloads">↓</button>
-        <button id="btn-menu">☰</button>
-    </div>
+	<div id="toolbar">
+		<button id="btn-back">←</button>
+		<button id="btn-forward">→</button>
+		<button id="btn-reload">⟳</button>
+		<button id="btn-home">⌂</button>
+		<input id="url" placeholder="搜索或输入网址...">
+		<button id="btn-go">前往</button>
+		<button id="btn-bookmarks">☆</button>
+		<button id="btn-history">◷</button>
+		<button id="btn-downloads">↓</button>
+		<button id="btn-menu">☰</button>
+	</div>
 
-    <div id="newtab-page">
-        <div id="clock">00:00</div>
-        <div id="shortcuts"></div>
-        <div style="margin-top: 40px;">
-            <a href="#" id="add-shortcut-btn">+</a>
-        </div>
-    </div>
+	<div id="newtab-page">
+		<div id="clock">00:00</div>
+		<div id="shortcuts"></div>
+		<div style="margin-top: 40px;">
+			<a href="#" id="add-shortcut-btn">+</a>
+		</div>
+	</div>
 
-    <div id="page-bookmarks" class="page">
-        <div class="page-header">
-            <h2>书签</h2>
-            <a href="#" class="btn-close-page" onclick="showNewTab(); return false;">返回 ✕</a>
-        </div>
-        <div style="margin-bottom: 15px;">
-            <a href="#" id="btn-add-bookmark-link" style="color: #3b7ddd; text-decoration: none; font-size: 14px;">+ 添加书签</a>
-        </div>
-        <div id="bookmarks-list">
-            <div class="empty">暂无书签</div>
-        </div>
-    </div>
+	<div id="page-bookmarks" class="page">
+		<div class="page-header">
+			<h2>书签</h2>
+			<a href="#" class="btn-close-page" onclick="showNewTab(); return false;">返回 ✕</a>
+		</div>
+		<div style="margin-bottom: 15px;">
+			<a href="#" id="btn-add-bookmark-link" style="color: #3b7ddd; text-decoration: none; font-size: 14px;">+ 添加书签</a>
+		</div>
+		<div id="bookmarks-list">
+			<div class="empty">暂无书签</div>
+		</div>
+	</div>
 
-    <div id="page-history" class="page">
-        <div class="page-header">
-            <h2>历史记录</h2>
-            <a href="#" class="btn-close-page" onclick="showNewTab(); return false;">返回 ✕</a>
-        </div>
-        <div id="history-list"></div>
-        <div class="history-note">历史记录仅保存近 60 天，过期后将自动清空</div>
-    </div>
+	<div id="page-history" class="page">
+		<div class="page-header">
+			<h2>历史记录</h2>
+			<a href="#" class="btn-close-page" onclick="showNewTab(); return false;">返回 ✕</a>
+		</div>
+		<div id="history-list"></div>
+		<div class="history-note">历史记录仅保存近 60 天，过期后将自动清空</div>
+	</div>
 
-    <div id="page-downloads" class="page">
-        <div class="page-header">
-            <h2>下载管理</h2>
-            <a href="#" class="btn-close-page" onclick="showNewTab(); return false;">返回 ✕</a>
-        </div>
-        <div class="download-tabs">
-            <div id="dl-all" class="active" onclick="filterDownloads('all', this)">全部</div>
-            <div id="dl-done" onclick="filterDownloads('done', this)">完成</div>
-            <div id="dl-running" onclick="filterDownloads('running', this)">进行中</div>
-            <div id="dl-failed" onclick="filterDownloads('failed', this)">失败</div>
-            <div id="dl-recycle" onclick="filterDownloads('recycle', this)">回收站</div>
-        </div>
-        <div id="downloads-list"></div>
-    </div>
+	<div id="page-downloads" class="page">
+		<div class="page-header">
+			<h2>下载管理</h2>
+			<a href="#" class="btn-close-page" onclick="showNewTab(); return false;">返回 ✕</a>
+		</div>
+		<div class="download-tabs">
+			<div id="dl-all" class="active" onclick="filterDownloads('all', this)">全部</div>
+			<div id="dl-done" onclick="filterDownloads('done', this)">完成</div>
+			<div id="dl-running" onclick="filterDownloads('running', this)">进行中</div>
+			<div id="dl-failed" onclick="filterDownloads('failed', this)">失败</div>
+			<div id="dl-recycle" onclick="filterDownloads('recycle', this)">回收站</div>
+		</div>
+		<div id="downloads-list"></div>
+	</div>
 
-    <div id="page-menu" class="page">
-        <div class="page-header">
-            <h2>菜单</h2>
-            <a href="#" class="btn-close-page" onclick="showNewTab(); return false;">返回 ✕</a>
-        </div>
-        <div class="item"><a href="#" id="menu-newtab">新建标签页</a></div>
-        <div class="item"><a href="#" id="menu-devtools">开发者工具</a></div>
-        <div class="item"><a href="#" onclick="closeAllPages()">关闭</a></div>
-    </div>
+	<div id="page-menu" class="page">
+		<div class="page-header">
+			<h2>菜单</h2>
+			<a href="#" class="btn-close-page" onclick="showNewTab(); return false;">返回 ✕</a>
+		</div>
+		<div class="item"><a href="#" id="menu-newtab">新建标签页</a></div>
+		<div class="item"><a href="#" id="menu-incognito">无痕模式</a></div> <!-- 0.8新增 -->
+		<div class="item"><a href="#" id="menu-devtools">开发者工具</a></div>
+		<div class="item"><a href="#" onclick="closeAllPages()">关闭</a></div>
+	</div>
 
-    <div id="error-page">
-        <div class="title" id="error-title"></div>
-        <div class="code" id="error-code"></div>
-        <div class="reason" id="error-reason"></div>
-        <div class="advice" id="error-advice"></div>
-        <div class="url" id="error-url"></div>
-        <button id="btn-retry">重试</button>
-        <button id="btn-gohome">返回主页</button>
-    </div>
+	<div id="error-page">
+		<div class="title" id="error-title"></div>
+		<div class="code" id="error-code"></div>
+		<div class="reason" id="error-reason"></div>
+		<div class="advice" id="error-advice"></div>
+		<div class="url" id="error-url"></div>
+		<button id="btn-retry">重试</button>
+		<button id="btn-gohome">返回主页</button>
+	</div>
 
-    <div id="modal-mask">
-        <div class="modal">
-            <div class="modal-title" id="modal-title"></div>
-            <div class="modal-body" id="modal-body"></div>
-            <div class="modal-buttons" id="modal-buttons"></div>
-        </div>
-    </div>
+	<div id="modal-mask">
+		<div class="modal">
+			<div class="modal-title" id="modal-title"></div>
+			<div class="modal-body" id="modal-body"></div>
+			<div class="modal-buttons" id="modal-buttons"></div>
+		</div>
+	</div>
 
-    <script>
-        const ipcRenderer = require('electron').ipcRenderer;
-        window.electronAPI = {
-            loadURL: (url) => ipcRenderer.send('load-url', url),
-            goBack: () => ipcRenderer.send('go-back'),
-            goForward: () => ipcRenderer.send('go-forward'),
-            reload: () => ipcRenderer.send('reload'),
-            newTab: (url) => ipcRenderer.send('new-tab', url),
-            closeTab: (id) => ipcRenderer.send('close-tab', id),
-            switchTab: (id) => ipcRenderer.send('switch-tab', id),
-            addBookmark: (title, url) => ipcRenderer.send('add-bookmark', title, url),
-            getBookmarks: () => ipcRenderer.send('get-bookmarks'),
-            removeBookmark: (url) => ipcRenderer.send('remove-bookmark', url),
-            getHistory: () => ipcRenderer.send('get-history'),
-            clearHistory: () => ipcRenderer.send('clear-history'),
-            getDownloads: () => ipcRenderer.send('get-downloads'),
-            openFile: (p) => ipcRenderer.send('open-file', p),
-            deleteFile: (id) => ipcRenderer.send('delete-file', id),
-            restoreFile: (id) => ipcRenderer.send('restore-file', id),
-            permDeleteFile: (id) => ipcRenderer.send('perm-delete-file', id),
-            openDevTools: () => ipcRenderer.send('open-dev-tools'),
-            
-            onURLChange: (callback) => ipcRenderer.on('url-changed', (event, url) => callback(url)),
-            onBookmarkUpdate: (callback) => ipcRenderer.on('bookmark-update', (event, bookmarks) => callback(bookmarks)),
-            onHistoryUpdate: (callback) => ipcRenderer.on('history-update', (event, history) => callback(history)),
-            onDownloadUpdate: (callback) => ipcRenderer.on('download-update', (event, downloads) => callback(downloads)),
-            onShowError: (callback) => ipcRenderer.on('show-error', (event, data) => callback(data)),
-            onTabUpdate: (callback) => ipcRenderer.on('tab-update', (event, tabs) => callback(tabs)),
-            onDownloadProgress: (callback) => ipcRenderer.on('download-progress', (event, data) => callback(data)),
-            onDownloadSuccess: (callback) => ipcRenderer.on('download-success', (event, data) => callback(data)),
-            onDownloadFailed: (callback) => ipcRenderer.on('download-failed', (event, data) => callback(data)),
-            onOpenFail: (callback) => ipcRenderer.on('open-fail', (event, msg) => callback(msg)),
-            onBookmarkTip: (callback) => ipcRenderer.on('bookmark-tip', (event, msg) => callback(msg))
-        };
+	<script>
+		const ipcRenderer = require('electron').ipcRenderer;
+		window.electronAPI = {
+			loadURL: (url) => ipcRenderer.send('load-url', url),
+			goBack: () => ipcRenderer.send('go-back'),
+			goForward: () => ipcRenderer.send('go-forward'),
+			reload: () => ipcRenderer.send('reload'),
+			newTab: (url) => ipcRenderer.send('new-tab', url),
+			closeTab: (id) => ipcRenderer.send('close-tab', id),
+			switchTab: (id) => ipcRenderer.send('switch-tab', id),
+			addBookmark: (title, url) => ipcRenderer.send('add-bookmark', title, url),
+			getBookmarks: () => ipcRenderer.send('get-bookmarks'),
+			removeBookmark: (url) => ipcRenderer.send('remove-bookmark', url),
+			getHistory: () => ipcRenderer.send('get-history'),
+			clearHistory: () => ipcRenderer.send('clear-history'),
+			getDownloads: () => ipcRenderer.send('get-downloads'),
+			openFile: (p) => ipcRenderer.send('open-file', p),
+			deleteFile: (id) => ipcRenderer.send('delete-file', id),
+			restoreFile: (id) => ipcRenderer.send('restore-file', id),
+			permDeleteFile: (id) => ipcRenderer.send('perm-delete-file', id),
+			openDevTools: () => ipcRenderer.send('open-dev-tools'),
+			toggleIncognito: (status) => ipcRenderer.send('toggle-incognito', status), // 0.8新增
+			
+			onURLChange: (callback) => ipcRenderer.on('url-changed', (event, url) => callback(url)),
+			onBookmarkUpdate: (callback) => ipcRenderer.on('bookmark-update', (event, bookmarks) => callback(bookmarks)),
+			onHistoryUpdate: (callback) => ipcRenderer.on('history-update', (event, history) => callback(history)),
+			onDownloadUpdate: (callback) => ipcRenderer.on('download-update', (event, downloads) => callback(downloads)),
+			onShowError: (callback) => ipcRenderer.on('show-error', (event, data) => callback(data)),
+			onTabUpdate: (callback) => ipcRenderer.on('tab-update', (event, tabs) => callback(tabs)),
+			onDownloadProgress: (callback) => ipcRenderer.on('download-progress', (event, data) => callback(data)),
+			onDownloadSuccess: (callback) => ipcRenderer.on('download-success', (event, data) => callback(data)),
+			onDownloadFailed: (callback) => ipcRenderer.on('download-failed', (event, data) => callback(data)),
+			onOpenFail: (callback) => ipcRenderer.on('open-fail', (event, msg) => callback(msg)),
+			onBookmarkTip: (callback) => ipcRenderer.on('bookmark-tip', (event, msg) => callback(msg))
+		};
 
-        const url = document.getElementById('url');
-        let downloads = [];
-        let downloadFilter = 'all';
-        let history = [];
-        let dlProgressOpen = false;
+		const url = document.getElementById('url');
+		let downloads = [];
+		let downloadFilter = 'all';
+		let history = [];
+		let dlProgressOpen = false;
 
-        function updateClock() {
-            const now = new Date();
-            const h = String(now.getHours()).padStart(2, '0');
-            const m = String(now.getMinutes()).padStart(2, '0');
-            const clock = document.getElementById('clock');
-            if (clock) clock.textContent = h + ':' + m;
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
+		let is12HourFormat = localStorage.getItem('timeFormat') === '12';
+		let isIncognito = false; // 0.8新增：无痕状态
 
-        function modal(title, body, buttons) {
-            document.getElementById('modal-title').textContent = title;
-            document.getElementById('modal-body').innerHTML = body;
-            const btnBox = document.getElementById('modal-buttons');
-            btnBox.innerHTML = '';
-            (buttons || [{ text: '确定', action: closeModal }]).forEach(b => {
-                const btn = document.createElement('button');
-                btn.textContent = b.text;
-                btn.onclick = b.action;
-                btnBox.appendChild(btn);
-            });
-            document.getElementById('modal-mask').style.display = 'flex';
-        }
+		function updateClock() {
+			const now = new Date();
+			let h = now.getHours();
+			let m = String(now.getMinutes()).padStart(2, '0');
+			let suffix = '';
+			if (is12HourFormat) {
+				suffix = h >= 12 ? ' p.m.' : ' a.m.';
+				h = h % 12;
+				h = h ? h : 12; 
+			} else {
+				h = String(h).padStart(2, '0');
+			}
+			const clock = document.getElementById('clock');
+			if (clock) clock.textContent = h + ':' + m + suffix;
+		}
+		setInterval(updateClock, 1000);
+		updateClock();
 
-        function closeModal() {
-            document.getElementById('modal-mask').style.display = 'none';
-        }
+		function modal(title, body, buttons) {
+			document.getElementById('modal-title').textContent = title;
+			document.getElementById('modal-body').innerHTML = body;
+			const btnBox = document.getElementById('modal-buttons');
+			btnBox.innerHTML = '';
+			(buttons || [{ text: '确定', action: closeModal }]).forEach(b => {
+				const btn = document.createElement('button');
+				btn.textContent = b.text;
+				btn.onclick = b.action;
+				btnBox.appendChild(btn);
+			});
+			document.getElementById('modal-mask').style.display = 'flex';
+		}
 
-        function go() {
-            let text = url.value.trim();
-            if (!text) return;
-            if (text.includes('.') && !text.includes(' ')) {
-                if (!text.startsWith('http')) text = 'https://' + text;
-            } else {
-                text = 'https://www.bing.com/search?q=' + encodeURIComponent(text);
-            }
-            window.electronAPI.loadURL(text);
-            setTimeout(() => { document.activeElement.blur(); }, 100);
-        }
+		function closeModal() {
+			document.getElementById('modal-mask').style.display = 'none';
+		}
 
-        function showPage(name) {
-            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-            document.getElementById('error-page').style.display = 'none';
-            document.getElementById('newtab-page').style.display = 'none';
-            const page = document.getElementById('page-' + name);
-            if (page) page.style.display = 'block';
+		function go() {
+			let text = url.value.trim();
+			if (!text) return;
+			if (text.includes('.') && !text.includes(' ')) {
+				if (!text.startsWith('http')) text = 'https://' + text;
+			} else {
+				text = 'https://www.bing.com/search?q=' + encodeURIComponent(text);
+			}
+			window.electronAPI.loadURL(text);
+			setTimeout(() => { document.activeElement.blur(); }, 100);
+		}
 
-            if (name === 'bookmarks') window.electronAPI.getBookmarks();
-            if (name === 'history') window.electronAPI.getHistory();
-            if (name === 'downloads') window.electronAPI.getDownloads();
-        }
+		function showPage(name) {
+			document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+			document.getElementById('error-page').style.display = 'none';
+			document.getElementById('newtab-page').style.display = 'none';
+			const page = document.getElementById('page-' + name);
+			if (page) page.style.display = 'block';
 
-        function showNewTab() {
-            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-            document.getElementById('error-page').style.display = 'none';
-            document.getElementById('newtab-page').style.display = 'block';
-        }
+			if (name === 'bookmarks') window.electronAPI.getBookmarks();
+			if (name === 'history') window.electronAPI.getHistory();
+			if (name === 'downloads') window.electronAPI.getDownloads();
+		}
 
-        function closeAllPages() {
-            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-            document.getElementById('error-page').style.display = 'none';
-            document.getElementById('newtab-page').style.display = 'none';
-        }
+		function showNewTab() {
+			document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+			document.getElementById('error-page').style.display = 'none';
+			document.getElementById('newtab-page').style.display = 'block';
+		}
 
-        function filterDownloads(filter, el) {
-            downloadFilter = filter;
-            document.querySelectorAll('.download-tabs div').forEach(d => d.classList.remove('active'));
-            el.classList.add('active');
-            renderDownloads();
-        }
+		function closeAllPages() {
+			document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+			document.getElementById('error-page').style.display = 'none';
+			document.getElementById('newtab-page').style.display = 'none';
+		}
 
-        // 弹窗二次确认（全中文优化）
-        function confirmDelete(id) {
-            modal('移至回收站', '确认要将此下载记录移至回收站吗？', [
-                { text: '确认', action: () => { window.electronAPI.deleteFile(id); closeModal(); } },
-                { text: '取消', action: closeModal }
-            ]);
-        }
+		function filterDownloads(filter, el) {
+			downloadFilter = filter;
+			document.querySelectorAll('.download-tabs div').forEach(d => d.classList.remove('active'));
+			el.classList.add('active');
+			renderDownloads();
+		}
 
-        function confirmPermDelete(id) {
-            modal('永久删除', '确认要永久删除该记录吗？', [
-                { text: '永久删除', action: () => { window.electronAPI.permDeleteFile(id); closeModal(); } },
-                { text: '取消', action: closeModal }
-            ]);
-        }
+		function confirmDelete(id) {
+			modal('移至回收站', '确认要将此下载记录移至回收站吗？', [
+				{ text: '确认', action: () => { window.electronAPI.deleteFile(id); closeModal(); } },
+				{ text: '取消', action: closeModal }
+			]);
+		}
 
-        function renderDownloads() {
-            const list = document.getElementById('downloads-list');
-            let items;
-            
-            if (downloadFilter === 'recycle') {
-                items = downloads.filter(d => d.deleted);
-            } else if (downloadFilter === 'done') {
-                items = downloads.filter(d => d.status === '已完成' && !d.deleted);
-            } else if (downloadFilter === 'running') {
-                items = downloads.filter(d => d.status === '下载中' && !d.deleted);
-            } else if (downloadFilter === 'failed') {
-                items = downloads.filter(d => d.status === '失败' && !d.deleted);
-            } else {
-                items = downloads.filter(d => !d.deleted);
-            }
+		function confirmPermDelete(id) {
+			modal('永久删除', '确认要永久删除该记录吗？', [
+				{ text: '永久删除', action: () => { window.electronAPI.permDeleteFile(id); closeModal(); } },
+				{ text: '取消', action: closeModal }
+			]);
+		}
 
-            if (!items || items.length === 0) {
-                list.innerHTML = '<div class="empty">暂无下载</div>';
-                return;
-            }
+		function renderDownloads() {
+			const list = document.getElementById('downloads-list');
+			let items;
+			
+			if (downloadFilter === 'recycle') {
+				items = downloads.filter(d => d.deleted);
+			} else if (downloadFilter === 'done') {
+				items = downloads.filter(d => d.status === '已完成' && !d.deleted);
+			} else if (downloadFilter === 'running') {
+				items = downloads.filter(d => d.status === '下载中' && !d.deleted);
+			} else if (downloadFilter === 'failed') {
+				items = downloads.filter(d => d.status === '失败' && !d.deleted);
+			} else {
+				items = downloads.filter(d => !d.deleted);
+			}
 
-            list.innerHTML = items.map(d => {
-                if (d.deleted) {
-                    return '<div class="file-box">' +
-                        '<div class="name">' + d.filename + '</div>' +
-                        '<div class="size">大小：' + d.size + '</div>' +
-                        '<div class="time">下载时间：' + d.time + '</div>' +
-                        '<div class="status">状态：已删除</div>' +
-                        '<button onclick="window.electronAPI.restoreFile(\'' + d.id + '\')">复原</button>' +
-                        '<button onclick="confirmPermDelete(\'' + d.id + '\')">永久删除</button>' +
-                        '</div>';
-                }
-                return '<div class="file-box">' +
-                    '<div class="name">' + d.filename + '</div>' +
-                    '<div class="size">大小：' + d.size + '</div>' +
-                    '<div class="time">下载时间：' + d.time + '</div>' +
-                    '<button onclick="window.electronAPI.openFile(\'' + d.path + '\')">打开</button>' +
-                    '<button onclick="confirmDelete(\'' + d.id + '\')">删除</button>' +
-                    '</div>';
-            }).join('');
-        }
+			if (!items || items.length === 0) {
+				list.innerHTML = '<div class="empty">暂无下载</div>';
+				return;
+			}
 
-        function renderHistory(data) {
-            history = data || [];
-            const list = document.getElementById('history-list');
-            if (!history.length) {
-                list.innerHTML = '<div class="empty">暂无搜索记录</div>';
-                return;
-            }
+			list.innerHTML = items.map(d => {
+				if (d.deleted) {
+					return '<div class="file-box">' +
+						'<div class="name">' + d.filename + '</div>' +
+						'<div class="size">大小：' + d.size + '</div>' +
+						'<div class="time">下载时间：' + d.time + '</div>' +
+						'<div class="status">状态：已删除</div>' +
+						'<button onclick="window.electronAPI.restoreFile(\'' + d.id + '\')">复原</button>' +
+						'<button onclick="confirmPermDelete(\'' + d.id + '\')">永久删除</button>' +
+						'</div>';
+				}
+				return '<div class="file-box">' +
+					'<div class="name">' + d.filename + '</div>' +
+					'<div class="size">大小：' + d.size + '</div>' +
+					'<div class="time">下载时间：' + d.time + '</div>' +
+					'<button onclick="window.electronAPI.openFile(\'' + d.path + '\')">打开</button>' +
+					'<button onclick="confirmDelete(\'' + d.id + '\')">删除</button>' +
+					'</div>';
+			}).join('');
+		}
 
-            const now = new Date();
-            const groups = { '刚才': [], '今天': [], '昨天': [], '更早': [] };
+		function renderHistory(data) {
+			history = data || [];
+			const list = document.getElementById('history-list');
+			if (!history.length) {
+				list.innerHTML = '<div class="empty">暂无搜索记录</div>';
+				return;
+			}
 
-            history.forEach(h => {
-                const t = new Date(h.time);
-                const diff = now - t;
-                if (diff < 60 * 60 * 1000) groups['刚才'].push(h);
-                else if (t.toDateString() === now.toDateString()) groups['今天'].push(h);
-                else {
-                    const yesterday = new Date(now);
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    if (t.toDateString() === yesterday.toDateString()) groups['昨天'].push(h);
-                    else groups['更早'].push(h);
-                }
-            });
+			const now = new Date();
+			const groups = { '刚才': [], '今天': [], '昨天': [], '更早': [] };
 
-            let html = '';
-            for (const key of ['刚才', '今天', '昨天', '更早']) {
-                if (groups[key].length === 0) continue;
-                html += '<div class="history-group"><h3>' + key + '</h3>';
-                groups[key].forEach(h => {
-                    html += '<div class="history-item" onclick="window.electronAPI.loadURL(\'' + h.url + '\')">' +
-                        '<span>' + h.title + '</span>' +
-                        '<span>' + h.time + '</span>' +
-                        '</div>';
-                });
-                html += '</div>';
-            }
-            list.innerHTML = html;
-        }
+			history.forEach(h => {
+				const t = new Date(h.time);
+				const diff = now - t;
+				if (diff < 60 * 60 * 1000) groups['刚才'].push(h);
+				else if (t.toDateString() === now.toDateString()) groups['今天'].push(h);
+				else {
+					const yesterday = new Date(now);
+					yesterday.setDate(yesterday.getDate() - 1);
+					if (t.toDateString() === yesterday.toDateString()) groups['昨天'].push(h);
+					else groups['更早'].push(h);
+				}
+			});
 
-        function renderTabs(tabs) {
-            const tabbar = document.getElementById('tabbar');
-            tabbar.querySelectorAll('.tab').forEach(t => t.remove());
-            const newtabBtn = document.getElementById('newtab');
+			let html = '';
+			for (const key of ['刚才', '今天', '昨天', '更早']) {
+				if (groups[key].length === 0) continue;
+				html += '<div class="history-group"><h3>' + key + '</h3>';
+				groups[key].forEach(h => {
+					html += '<div class="history-item" onclick="window.electronAPI.loadURL(\'' + h.url + '\')">' +
+						'<span>' + h.title + '</span>' +
+						'<span>' + h.time + '</span>' +
+						'</div>';
+				});
+				html += '</div>';
+			}
+			list.innerHTML = html;
+		}
 
-            (tabs || []).forEach(t => {
-                const div = document.createElement('div');
-                div.className = 'tab' + (t.active ? ' active' : '');
-                div.innerHTML = '<span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 4px;">' + t.title + '</span><span class="close">✕</span>';
-                div.onclick = (e) => {
-                    if (e.target.classList.contains('close')) {
-                        window.electronAPI.closeTab(t.id);
-                    } else {
-                        window.electronAPI.switchTab(t.id);
-                    }
-                };
-                tabbar.insertBefore(div, newtabBtn);
-            });
-        }
+		function renderTabs(tabs) {
+			const tabbar = document.getElementById('tabbar');
+			tabbar.querySelectorAll('.tab').forEach(t => t.remove());
+			const newtabBtn = document.getElementById('newtab');
 
-        let customShortcuts = JSON.parse(localStorage.getItem('my_shortcuts')) || [
-            { name: '百度', url: 'https://www.baidu.com', fixed: true },
-            { name: 'B站', url: 'https://www.bilibili.com', fixed: true },
-            { name: '必应', url: 'https://www.bing.com', fixed: true },
-            { name: '知乎', url: 'https://www.zhihu.com', fixed: true }
-        ];
+			(tabs || []).forEach(t => {
+				const div = document.createElement('div');
+				div.className = 'tab' + (t.active ? ' active' : '');
+				div.innerHTML = '<span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 4px;">' + t.title + '</span><span class="close">✕</span>';
+				div.onclick = (e) => {
+					if (e.target.classList.contains('close')) {
+						window.electronAPI.closeTab(t.id);
+					} else {
+						window.electronAPI.switchTab(t.id);
+					}
+				};
+				tabbar.insertBefore(div, newtabBtn);
+			});
+		}
 
-        let pressTimer = null;
-        let isLongPress = false;
+		let customShortcuts = JSON.parse(localStorage.getItem('my_shortcuts')) || [
+			{ name: '百度', url: 'https://www.baidu.com', fixed: true },
+			{ name: 'B站', url: 'https://www.bilibili.com', fixed: true },
+			{ name: '必应', url: 'https://www.bing.com', fixed: true },
+			{ name: '知乎', url: 'https://www.zhihu.com', fixed: true }
+		];
 
-        function renderShortcuts() {
-            const container = document.getElementById('shortcuts');
-            container.innerHTML = '';
-            
-            customShortcuts.forEach((s, index) => {
-                let domain = '';
-                try {
-                    domain = new URL(s.url).origin;
-                } catch(e) {
-                    domain = s.url;
-                }
-                
-                const iconUrl = `${domain}/favicon.ico`;
-                const firstChar = s.name ? s.name.charAt(0) : '?';
+		let pressTimer = null;
+		let isLongPress = false;
 
-                container.innerHTML += `
-                    <div class="shortcut" data-index="${index}">
-                        <div class="icon-container">
-                            <img src="${iconUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                            <span class="icon-text" style="display: none;">${firstChar}</span>
-                        </div>
-                        <div>${s.name}</div>
-                    </div>
-                `;
-            });
+		function renderShortcuts() {
+			const container = document.getElementById('shortcuts');
+			container.innerHTML = '';
+			
+			customShortcuts.forEach((s, index) => {
+				let domain = '';
+				try {
+					domain = new URL(s.url).origin;
+				} catch(e) {
+					domain = s.url;
+				}
+				
+				const iconUrl = `${domain}/favicon.ico`;
+				const firstChar = s.name ? s.name.charAt(0) : '?';
 
-            document.querySelectorAll('.shortcut').forEach(el => {
-                el.onmousedown = (e) => {
-                    isLongPress = false;
-                    pressTimer = setTimeout(() => {
-                        isLongPress = true;
-                        const index = el.getAttribute('data-index');
-                        showContextMenu(index, e);
-                    }, 600);
-                };
+				container.innerHTML += `
+					<div class="shortcut" data-index="${index}">
+						<div class="icon-container">
+							<img src="${iconUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+							<span class="icon-text" style="display: none;">${firstChar}</span>
+						</div>
+						<div>${s.name}</div>
+					</div>
+				`;
+			});
 
-                el.onmouseup = (e) => {
-                    clearTimeout(pressTimer);
-                    if (!isLongPress) {
-                        const index = el.getAttribute('data-index');
-                        window.electronAPI.loadURL(customShortcuts[index].url);
-                    }
-                };
+			document.querySelectorAll('.shortcut').forEach(el => {
+				el.onmousedown = (e) => {
+					isLongPress = false;
+					pressTimer = setTimeout(() => {
+						isLongPress = true;
+						const index = el.getAttribute('data-index');
+						showContextMenu(index, e);
+					}, 600);
+				};
 
-                el.onmouseleave = (e) => {
-                    clearTimeout(pressTimer);
-                };
-            });
-        }
+				el.onmouseup = (e) => {
+					clearTimeout(pressTimer);
+					if (!isLongPress) {
+						const index = el.getAttribute('data-index');
+						window.electronAPI.loadURL(customShortcuts[index].url);
+					}
+				};
 
-        function showContextMenu(index, event) {
-            const s = customShortcuts[index];
-            const isFixed = s.fixed === true;
-            
-            const btnOk = {
-                text: '重命名',
-                action: () => {
-                    closeModal();
-                    setTimeout(() => showRenameShortcutModal(index), 100);
-                }
-            };
+				el.onmouseleave = (e) => {
+					clearTimeout(pressTimer);
+				};
+			});
+		}
 
-            const btnCancel = { text: '取消', action: closeModal };
+		function showContextMenu(index, event) {
+			const s = customShortcuts[index];
+			const isFixed = s.fixed === true;
+			
+			const btnOk = {
+				text: '重命名',
+				action: () => {
+					closeModal();
+					setTimeout(() => showRenameShortcutModal(index), 100);
+				}
+			};
 
-            const btns = isFixed ? [btnOk, btnCancel] : [
-                btnOk,
-                { text: '删除此快捷方式', action: () => { closeModal(); deleteShortcut(index); } },
-                btnCancel
-            ];
+			const btnCancel = { text: '取消', action: closeModal };
 
-            modal('操作快捷方式', `你要对“${s.name}”做什么？`, btns);
-        }
+			const btns = isFixed ? [btnOk, btnCancel] : [
+				btnOk,
+				{ text: '删除此快捷方式', action: () => { closeModal(); deleteShortcut(index); } },
+				btnCancel
+			];
 
-        function deleteShortcut(index) {
-            customShortcuts.splice(index, 1);
-            localStorage.setItem('my_shortcuts', JSON.stringify(customShortcuts));
-            renderShortcuts();
-        }
+			modal('操作快捷方式', `你要对“${s.name}”做什么？`, btns);
+		}
 
-        function showRenameShortcutModal(index) {
-            const s = customShortcuts[index];
-            const bodyHTML = `
-                <div style="margin-bottom: 12px; text-align: left;">
-                    <div style="margin-bottom: 4px; color: #666; font-size: 13px;">请输入新的名称：</div>
-                    <input type="text" id="rename-input" value="${s.name}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; outline: none;">
-                </div>
-            `;
-            modal('重命名快捷方式', bodyHTML, [
-                { 
-                    text: '确定', 
-                    action: () => { 
-                        const newName = document.getElementById('rename-input').value.trim();
-                        if (newName) {
-                            customShortcuts[index].name = newName;
-                            localStorage.setItem('my_shortcuts', JSON.stringify(customShortcuts));
-                            renderShortcuts();
-                        }
-                        closeModal(); 
-                    } 
-                },
-                { text: '取消', action: closeModal }
-            ]);
-        }
+		function deleteShortcut(index) {
+			customShortcuts.splice(index, 1);
+			localStorage.setItem('my_shortcuts', JSON.stringify(customShortcuts));
+			renderShortcuts();
+		}
 
-        function showAddShortcutModal(prevName = '', prevUrl = '', errorMsg = '') {
-            const errorHTML = errorMsg ? `<div style="color: #d33; font-size: 13px; margin-bottom: 12px; text-align: left;">${errorMsg}</div>` : '';
-            
-            const bodyHTML = `
-                ${errorHTML}
-                <div style="margin-bottom: 12px; text-align: left;">
-                    <div style="margin-bottom: 4px; color: #666; font-size: 13px;">请输入需要添加的网址：</div>
-                    <input type="text" id="sc-url-input" value="${prevUrl}" placeholder="https://" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; outline: none;">
-                </div>
-                <div style="text-align: left;">
-                    <div style="margin-bottom: 4px; color: #666; font-size: 13px;">请输入快捷键名称：</div>
-                    <input type="text" id="sc-name-input" value="${prevName}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; outline: none;">
-                </div>
-            `;
+		function showRenameShortcutModal(index) {
+			const s = customShortcuts[index];
+			const bodyHTML = `
+				<div style="margin-bottom: 12px; text-align: left;">
+					<div style="margin-bottom: 4px; color: #666; font-size: 13px;">请输入新的名称：</div>
+					<input type="text" id="rename-input" value="${s.name}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; outline: none;">
+				</div>
+			`;
+			modal('重命名快捷方式', bodyHTML, [
+				{ 
+					text: '确定', 
+					action: () => { 
+						const newName = document.getElementById('rename-input').value.trim();
+						if (newName) {
+							customShortcuts[index].name = newName;
+							localStorage.setItem('my_shortcuts', JSON.stringify(customShortcuts));
+							renderShortcuts();
+						}
+						closeModal(); 
+					} 
+				},
+				{ text: '取消', action: closeModal }
+			]);
+		}
 
-            modal('添加快捷方式', bodyHTML, [
-                { 
-                    text: '确定', 
-                    action: () => { 
-                        const name = document.getElementById('sc-name-input').value.trim();
-                        let url = document.getElementById('sc-url-input').value.trim();
-                        
-                        if (!url) {
-                            showAddShortcutModal(name, url, '网址不能为空');
-                            return;
-                        }
-                        if (!url.startsWith('http')) url = 'https://' + url;
+		function showAddShortcutModal(prevName = '', prevUrl = '', errorMsg = '') {
+			const errorHTML = errorMsg ? `<div style="color: #d33; font-size: 13px; margin-bottom: 12px; text-align: left;">${errorMsg}</div>` : '';
+			
+			const bodyHTML = `
+				${errorHTML}
+				<div style="margin-bottom: 12px; text-align: left;">
+					<div style="margin-bottom: 4px; color: #666; font-size: 13px;">请输入需要添加的网址：</div>
+					<input type="text" id="sc-url-input" value="${prevUrl}" placeholder="https://" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; outline: none;">
+				</div>
+				<div style="text-align: left;">
+					<div style="margin-bottom: 4px; color: #666; font-size: 13px;">请输入快捷键名称：</div>
+					<input type="text" id="sc-name-input" value="${prevName}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; outline: none;">
+				</div>
+			`;
 
-                        const btnBox = document.getElementById('modal-buttons');
-                        btnBox.innerHTML = '<span style="color:#666; font-size:13px;">正在验证网址...</span>';
+			modal('添加快捷方式', bodyHTML, [
+				{ 
+					text: '确定', 
+					action: () => { 
+						const name = document.getElementById('sc-name-input').value.trim();
+						let url = document.getElementById('sc-url-input').value.trim();
+						
+						if (!url) {
+							showAddShortcutModal(name, url, '网址不能为空');
+							return;
+						}
+						if (!url.startsWith('http')) url = 'https://' + url;
 
-                        fetch(url, { mode: 'no-cors', method: 'HEAD', cache: 'no-cache' })
-                            .then(() => {
-                                let finalName = name;
-                                if (!finalName) finalName = url.replace(/^https?:\/\//, '');
-                                customShortcuts.push({ name: finalName, url: url });
-                                localStorage.setItem('my_shortcuts', JSON.stringify(customShortcuts));
-                                renderShortcuts();
-                                closeModal(); 
-                            })
-                            .catch(() => {
-                                showAddShortcutModal(name, url, '网址存在错误，请重新输入');
-                            });
-                    } 
-                },
-                { text: '取消', action: closeModal }
-            ]);
-        }
+						const btnBox = document.getElementById('modal-buttons');
+						btnBox.innerHTML = '<span style="color:#666; font-size:13px;">正在验证网址...</span>';
 
-        window.onload = function() {
-            url.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
-            document.getElementById('btn-back').onclick = () => window.electronAPI.goBack();
-            document.getElementById('btn-forward').onclick = () => window.electronAPI.goForward();
-            document.getElementById('btn-reload').onclick = () => window.electronAPI.reload();
-            document.getElementById('btn-home').onclick = () => window.electronAPI.loadURL('https://www.bing.com');
-            document.getElementById('btn-go').onclick = go;
-            
-            document.getElementById('newtab').onclick = () => {
-                showNewTab();
-                window.electronAPI.newTab('about:blank');
-            };
-            
-            document.getElementById('btn-add-bookmark-link').onclick = (e) => {
-                e.preventDefault(); 
-                let currentUrl = document.getElementById('url').value;
-                if (currentUrl === 'about:blank') currentUrl = '';
+						fetch(url, { mode: 'no-cors', method: 'HEAD', cache: 'no-cache' })
+							.then(() => {
+								let finalName = name;
+								if (!finalName) finalName = url.replace(/^https?:\/\//, '');
+								customShortcuts.push({ name: finalName, url: url });
+								localStorage.setItem('my_shortcuts', JSON.stringify(customShortcuts));
+								renderShortcuts();
+								closeModal(); 
+							})
+							.catch(() => {
+								showAddShortcutModal(name, url, '网址存在错误，请重新输入');
+							});
+					} 
+				},
+				{ text: '取消', action: closeModal }
+			]);
+		}
 
-                const bodyHTML = `
-                    <div style="margin-bottom: 12px; text-align: left;">
-                        <div style="margin-bottom: 4px; color: #666; font-size: 13px;">名称：</div>
-                        <input type="text" id="bm-name-input" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; outline: none;">
-                    </div>
-                    <div style="text-align: left;">
-                        <div style="margin-bottom: 4px; color: #666; font-size: 13px;">网址：</div>
-                        <input type="text" id="bm-url-input" value="${currentUrl}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; outline: none;">
-                    </div>
-                `;
+		window.onload = function() {
+			url.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+			document.getElementById('btn-back').onclick = () => window.electronAPI.goBack();
+			document.getElementById('btn-forward').onclick = () => window.electronAPI.goForward();
+			document.getElementById('btn-reload').onclick = () => window.electronAPI.reload();
+			document.getElementById('btn-home').onclick = () => window.electronAPI.loadURL('https://www.bing.com');
+			document.getElementById('btn-go').onclick = go;
+			
+			document.getElementById('newtab').onclick = () => {
+				showNewTab();
+				window.electronAPI.newTab('about:blank');
+			};
+			
+			document.getElementById('btn-add-bookmark-link').onclick = (e) => {
+				e.preventDefault(); 
+				let currentUrl = document.getElementById('url').value;
+				if (currentUrl === 'about:blank') currentUrl = '';
 
-                modal('添加书签', bodyHTML, [
-                    { 
-                        text: '添加', 
-                        action: () => { 
-                            const nameVal = document.getElementById('bm-name-input').value.trim();
-                            const urlVal = document.getElementById('bm-url-input').value.trim();
-                            if (!urlVal) {
-                                modal('提示', '请输入有效的网址。', [{ text: '好的', action: closeModal }]);
-                                return;
-                            }
-                            window.electronAPI.addBookmark(nameVal || urlVal, urlVal); 
-                            closeModal(); 
-                        } 
-                    },
-                    { text: '取消', action: closeModal }
-                ]);
-            };
-            
-            document.getElementById('btn-bookmarks').onclick = () => showPage('bookmarks');
-            document.getElementById('btn-history').onclick = () => showPage('history');
-            document.getElementById('btn-downloads').onclick = () => showPage('downloads');
-            document.getElementById('btn-menu').onclick = () => showPage('menu');
-            document.getElementById('menu-newtab').onclick = () => window.electronAPI.newTab('about:blank');
-            document.getElementById('menu-devtools').onclick = () => window.electronAPI.openDevTools();
-            document.getElementById('btn-retry').onclick = () => window.electronAPI.reload();
-            document.getElementById('btn-gohome').onclick = () => window.electronAPI.loadURL('https://www.bing.com');
-            document.getElementById('add-shortcut-btn').onclick = (e) => { e.preventDefault(); showAddShortcutModal(); };
+				const bodyHTML = `
+					<div style="margin-bottom: 12px; text-align: left;">
+						<div style="margin-bottom: 4px; color: #666; font-size: 13px;">名称：</div>
+						<input type="text" id="bm-name-input" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; outline: none;">
+					</div>
+					<div style="text-align: left;">
+						<div style="margin-bottom: 4px; color: #666; font-size: 13px;">网址：</div>
+						<input type="text" id="bm-url-input" value="${currentUrl}" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; outline: none;">
+					</div>
+				`;
 
-            window.electronAPI.onURLChange((newUrl) => {
-                url.value = newUrl;
-                if (newUrl === 'about:blank' || newUrl === '') showNewTab();
-                else closeAllPages();
-            });
+				modal('添加书签', bodyHTML, [
+					{ 
+						text: '添加', 
+						action: () => { 
+							const nameVal = document.getElementById('bm-name-input').value.trim();
+							const urlVal = document.getElementById('bm-url-input').value.trim();
+							if (!urlVal) {
+								modal('提示', '请输入有效的网址。', [{ text: '好的', action: closeModal }]);
+								return;
+							}
+							window.electronAPI.addBookmark(nameVal || urlVal, urlVal); 
+							closeModal(); 
+						} 
+					},
+					{ text: '取消', action: closeModal }
+				]);
+			};
+			
+			document.getElementById('btn-bookmarks').onclick = () => showPage('bookmarks');
+			document.getElementById('btn-history').onclick = () => showPage('history');
+			document.getElementById('btn-downloads').onclick = () => showPage('downloads');
+			document.getElementById('btn-menu').onclick = () => showPage('menu');
+			document.getElementById('menu-newtab').onclick = () => window.electronAPI.newTab('about:blank');
+			document.getElementById('menu-devtools').onclick = () => window.electronAPI.openDevTools();
+			document.getElementById('btn-retry').onclick = () => window.electronAPI.reload();
+			document.getElementById('btn-gohome').onclick = () => window.electronAPI.loadURL('https://www.bing.com');
+			document.getElementById('add-shortcut-btn').onclick = (e) => { e.preventDefault(); showAddShortcutModal(); };
 
-            window.electronAPI.onTabUpdate((tabs) => {
-                renderTabs(tabs);
-                const currentUrl = document.getElementById('url').value;
-                if (currentUrl === 'about:blank' || currentUrl === '') showNewTab();
-                else closeAllPages();
-            });
+			// === 0.8 新增：大时钟的长按事件绑定 ===
+			const clockElement = document.getElementById('clock');
+			let clockPressTimer = null;
 
-            window.electronAPI.onBookmarkUpdate((data) => {
-                const list = document.getElementById('bookmarks-list');
-                if (!data || data.length === 0) {
-                    list.innerHTML = '<div class="empty">暂无书签</div>';
-                    return;
-                }
-                list.innerHTML = data.map(b =>
-                    '<div class="item"><a href="#" onclick="window.electronAPI.loadURL(\'' + b.url + '\')">' + b.title + '</a></div>'
-                ).join('');
-            });
+			clockElement.onmousedown = () => {
+				clockPressTimer = setTimeout(() => {
+					modal('时间格式', '你要将此显示时间改成什么制？', [
+						{ 
+							text: '12 小时制', 
+							action: () => { 
+								is12HourFormat = true; 
+								localStorage.setItem('timeFormat', '12'); 
+								updateClock(); 
+								closeModal(); 
+							} 
+						},
+						{ 
+							text: '24 小时制', 
+							action: () => { 
+								is12HourFormat = false; 
+								localStorage.setItem('timeFormat', '24'); 
+								updateClock(); 
+								closeModal(); 
+							} 
+						},
+						{ text: '取消', action: closeModal }
+					]);
+				}, 600); 
+			};
+			clockElement.onmouseup = () => clearTimeout(clockPressTimer);
+			clockElement.onmouseleave = () => clearTimeout(clockPressTimer);
 
-            window.electronAPI.onHistoryUpdate((data) => renderHistory(data));
-            window.electronAPI.onDownloadUpdate((data) => { downloads = data || []; renderDownloads(); });
+			// === 0.8 新增：无痕模式按钮 ===
+			document.getElementById('menu-incognito').onclick = () => {
+				if (isIncognito) {
+					modal('关闭无痕模式', '是否关闭无痕模式？<br>关闭后，你所有搜索的记录都会保存。', [
+						{ text: '确定', action: () => { 
+							isIncognito = false; 
+							document.body.classList.remove('incognito'); 
+							window.electronAPI.toggleIncognito(false); 
+							closeModal(); 
+						} },
+						{ text: '取消', action: closeModal }
+					]);
+				} else {
+					modal('无痕模式', '是否进行无痕模式？<br>进行后，从今日起，你所有搜索的记录将不再保留。', [
+						{ text: '确定', action: () => { 
+							isIncognito = true; 
+							document.body.classList.add('incognito'); 
+							window.electronAPI.toggleIncognito(true); 
+							closeModal(); 
+						} },
+						{ text: '取消', action: closeModal }
+					]);
+				}
+			};
 
-            window.electronAPI.onDownloadProgress((data) => {
-                if (!dlProgressOpen) {
-                    dlProgressOpen = true;
-                    modal('正在下载', '文件：' + data.filename + '<br>进度：' + data.progress + '%', [{ text: '隐藏', action: () => { dlProgressOpen = false; closeModal(); } }]);
-                } else {
-                    const body = document.getElementById('modal-body');
-                    if (body) body.innerHTML = '文件：' + data.filename + '<br>进度：' + data.progress + '%';
-                }
-            });
+			// 页面加载时，如果当前处于无痕模式（虽然刚打开默认不是），重置UI
+			if (isIncognito) document.body.classList.add('incognito');
 
-            window.electronAPI.onDownloadSuccess((data) => {
-                dlProgressOpen = false;
-                modal('下载成功', '文件已保存至：<br>' + data.path, [
-                    { text: '确定', action: closeModal },
-                    { text: '打开文件', action: () => { window.electronAPI.openFile(data.path); closeModal(); } }
-                ]);
-            });
+			// 监听后台发送过来的 URL 变化和报错
+			window.electronAPI.onURLChange((newUrl) => {
+				url.value = newUrl;
+				if (newUrl === 'about:blank' || newUrl === '') showNewTab();
+				else closeAllPages();
+			});
 
-            window.electronAPI.onDownloadFailed((data) => {
-                dlProgressOpen = false;
-                modal('下载失败', '下载未能完成，原因：' + data.error, [{ text: '关闭', action: closeModal }]);
-            });
+			window.electronAPI.onTabUpdate((tabs) => {
+				renderTabs(tabs);
+				const currentUrl = document.getElementById('url').value;
+				if (currentUrl === 'about:blank' || currentUrl === '') showNewTab();
+				else closeAllPages();
+			});
 
-            window.electronAPI.onOpenFail((msg) => {
-                modal('提示', msg, [{ text: '确定', action: closeModal }]);
-            });
+			window.electronAPI.onBookmarkUpdate((data) => {
+				const list = document.getElementById('bookmarks-list');
+				if (!data || data.length === 0) {
+					list.innerHTML = '<div class="empty">暂无书签</div>';
+					return;
+				}
+				list.innerHTML = data.map(b =>
+					'<div class="item"><a href="#" onclick="window.electronAPI.loadURL(\'' + b.url + '\')">' + b.title + '</a></div>'
+				).join('');
+			});
 
-            window.electronAPI.onBookmarkTip((msg) => {
-                modal('提示', msg, [{ text: '好的', action: closeModal }]);
-            });
+			window.electronAPI.onHistoryUpdate((data) => renderHistory(data));
+			window.electronAPI.onDownloadUpdate((data) => { downloads = data || []; renderDownloads(); });
 
-            window.electronAPI.onShowError((data) => {
-                closeAllPages();
-                document.getElementById('error-page').style.display = 'block';
-                document.getElementById('error-title').textContent = data.title;
-                document.getElementById('error-code').textContent = '错误代码：' + data.code;
-                document.getElementById('error-reason').textContent = '原因：' + data.reason;
-                document.getElementById('error-advice').textContent = '建议：' + data.advice;
-                document.getElementById('error-url').textContent = '网址：' + data.url;
-            });
+			window.electronAPI.onDownloadProgress((data) => {
+				if (!dlProgressOpen) {
+					dlProgressOpen = true;
+					modal('正在下载', '文件：' + data.filename + '<br>进度：' + data.progress + '%', [{ text: '隐藏', action: () => { dlProgressOpen = false; closeModal(); } }]);
+				} else {
+					const body = document.getElementById('modal-body');
+					if (body) body.innerHTML = '文件：' + data.filename + '<br>进度：' + data.progress + '%';
+				}
+			});
 
-            renderShortcuts();
-        };
-    </script>
+			window.electronAPI.onDownloadSuccess((data) => {
+				dlProgressOpen = false;
+				modal('下载成功', '文件已保存至：<br>' + data.path, [
+					{ text: '确定', action: closeModal },
+					{ text: '打开文件', action: () => { window.electronAPI.openFile(data.path); closeModal(); } }
+				]);
+			});
+
+			window.electronAPI.onDownloadFailed((data) => {
+				dlProgressOpen = false;
+				modal('下载失败', '下载未能完成，原因：' + data.error, [{ text: '关闭', action: closeModal }]);
+			});
+
+			window.electronAPI.onOpenFail((msg) => {
+				modal('提示', msg, [{ text: '确定', action: closeModal }]);
+			});
+
+			window.electronAPI.onBookmarkTip((msg) => {
+				modal('提示', msg, [{ text: '好的', action: closeModal }]);
+			});
+
+			window.electronAPI.onShowError((data) => {
+				closeAllPages();
+				document.getElementById('error-page').style.display = 'block';
+				document.getElementById('error-title').textContent = data.title;
+				document.getElementById('error-code').textContent = '错误代码：' + data.code;
+				document.getElementById('error-reason').textContent = '原因：' + data.reason;
+				document.getElementById('error-advice').textContent = '建议：' + data.advice;
+				document.getElementById('error-url').textContent = '网址：' + data.url;
+			});
+
+			renderShortcuts();
+		};
+	</script>
 </body>
 </html>

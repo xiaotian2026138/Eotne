@@ -5,6 +5,7 @@ const fs = require('fs');
 let win = null;
 let views = [];
 let activeTab = 0;
+let isIncognito = false;
 
 const DATA_DIR = path.join(app.getPath('userData'), 'Eotne');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -222,6 +223,7 @@ function switchTab(idx) {
 }
 
 function addHistory(url, title) {
+    if (isIncognito) return;
     if (!url || url === 'about:blank') return;
     history = history.filter(h => h.url !== url);
     history.unshift({ url: url, title: title || url, time: new Date().toLocaleString() });
@@ -317,6 +319,10 @@ app.whenReady().then(() => {
     createWindow();
     cleanOldHistory();
     setInterval(cleanOldHistory, 60 * 60 * 1000);
+});
+
+ipcMain.on('toggle-incognito', (e, status) => {
+    isIncognito = status;
 });
 
 app.on('window-all-closed', () => {

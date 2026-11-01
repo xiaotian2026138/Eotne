@@ -25,6 +25,7 @@ Eotne 是一个极简、轻量的浏览器，它没有广告，没有追踪器�
 如果报错，请在执行npm install命令之前，依次输入：
 
 npm config set registry https://registry.npmmirror.com/
+
 npm config set ELECTRON_MIRROR https://npmmirror.com/mirrors/electron/
 
 ## 开源协议

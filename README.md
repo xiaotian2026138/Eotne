@@ -17,10 +17,15 @@ Eotne 是一个极简、轻量的浏览器，它没有广告，没有追踪器�
 3. 点击 **Assets** 下方，找到`Eotne.Setup.x.x.x.exe`格式下载。(根据你选择的版本为准)
 4. 下载完成后，双击安装包即可使用（无需配置任何环境）。
 
-## 双击run.bat需安装什么环境
-如果双击run.bat，请务必确保你是否有Node环境，如果缺少，很可能无法运行，导致报错
-
+## 双击run.bat需安装什么环境和依赖
+如果双击run.bat，请务必确保你是否有Node环境和依赖，如果缺少其中一个，很可能会无法运行，导致报错。
 官网链接：nodejs.org
+依赖：npm install
+
+如果报错，请在执行npm install命令之前，依次输入：
+
+npm config set registry https://registry.npmmirror.com/
+npm config set ELECTRON_MIRROR https://npmmirror.com/mirrors/electron/
 
 ## 开源协议
 本项目采用 [MIT License](LICENSE) 开源协议。

@@ -29,7 +29,7 @@ const ERR_MAP = {
 
 function getWebBounds() {
     const winSize = win.getBounds();
-    return { x: 0, y: 80, width: winSize.width, height: winSize.height - 80 };
+    return { x: 0, y: 85, width: winSize.width, height: winSize.height - 85 };
 }
 
 function loadJSON(file, def) {
@@ -154,18 +154,24 @@ function newTab(url) {
     });
 
     win.addBrowserView(view);
-    view.setBounds({ x: 0, y: 80, width: 0, height: 0 });
+    view.setBounds({ x: 0, y: 85, width: 0, height: 0 });
     view.setAutoResize({ width: true, height: true });
     view.webContents.loadURL(url || 'about:blank');
     
     const tabInfo = { view: view, title: '新标签页' };
 
-    view.webContents.on('did-navigate', (e, u) => {
-        if (views[activeTab] && views[activeTab].view === view) {
-            if (win && !win.isDestroyed()) win.webContents.send('url-changed', u);
-            addHistory(u, view.webContents.getTitle());
-        }
-    });
+view.webContents.on('did-navigate', (e, u) => {
+    if (views[activeTab] && views[activeTab].view === view) {
+        if (win && !win.isDestroyed()) win.webContents.send('url-changed', u);
+        addHistory(u, view.webContents.getTitle());
+    }
+    
+    if (win && !win.isDestroyed() && view) {
+        win.focus();
+        view.webContents.executeJavaScript('document.activeElement.blur()');
+    }
+});
+
     view.webContents.on('did-navigate-in-page', (e, u) => {
         if (views[activeTab] && views[activeTab].view === view) {
             if (win && !win.isDestroyed()) win.webContents.send('url-changed', u);
@@ -217,7 +223,7 @@ function switchTab(idx) {
     const isBlank = !currentUrl || currentUrl === 'about:blank';
     views.forEach((v, i) => {
         if (i === idx && !isBlank) v.view.setBounds(getWebBounds());
-        else v.view.setBounds({ x: 0, y: 80, width: 0, height: 0 });
+        else v.view.setBounds({ x: 0, y: 85, width: 0, height: 0 });
     });
     syncTabs();
 }

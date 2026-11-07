@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 	<meta charset="UTF-8">
-	<title>Eotne 0.8.0</title>
+	<title>Eotne 0.8.1</title>
 	<style>
 		* { margin: 0; padding: 0; box-sizing: border-box; }
 		body { font-family: "Microsoft YaHei", sans-serif; overflow: hidden; }
@@ -82,6 +82,32 @@
 		
 		#add-shortcut-btn { display: inline-block; width: 48px; height: 48px; line-height: 44px; border-radius: 50%; background: #f0f0f0; color: #888; font-size: 24px; text-decoration: none; transition: 0.2s; }
 		#add-shortcut-btn:hover { background: #e0e0e0; }
+
+body.incognito .shortcut div, 
+body.incognito .page-header h2, 
+body.incognito .item a,
+body.incognito .history-item span,
+body.incognito .download-tabs div,
+body.incognito .file-box .name,
+body.incognito .file-box .status {
+    color: #f5f5f5 !important; 
+}
+
+body.incognito .file-box .size,
+body.incognito .file-box .time,
+body.incognito .history-note {
+    color: #b0b0b0 !important; 
+}
+
+body.incognito .empty {
+    color: #888 !important;
+}
+
+body.incognito .btn-close-page,
+body.incognito .add-btn {
+    color: #ccc !important;
+}
+
 	</style>
 </head>
 <body>

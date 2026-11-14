@@ -86,6 +86,18 @@ function createWindow() {
         }
     });
 
+win.on('restore', () => {
+    if (win && !win.isDestroyed() && views[activeTab]) {
+        const currentView = views[activeTab].view;
+        if (currentView && !currentView.webContents.isDestroyed()) {
+            currentView.setBounds({ x: 0, y: 85, width: 0, height: 0 });
+            setTimeout(() => {
+                currentView.setBounds(getWebBounds());
+            }, 50);
+        }
+    }
+});
+
     session.defaultSession.on('will-download', (event, item) => {
         const filename = item.getFilename();
         const savePath = path.join(app.getPath('downloads'), filename);
@@ -153,11 +165,20 @@ function newTab(url) {
         }
     });
 
-    win.addBrowserView(view);
-    view.setBounds({ x: 0, y: 85, width: 0, height: 0 });
-    view.setAutoResize({ width: true, height: true });
-    view.webContents.loadURL(url || 'about:blank');
-    
+win.addBrowserView(view);
+
+view.setBackgroundColor('#ffffff'); 
+view.webContents.setVisualZoomLevelLimits(1, 1); 
+view.webContents.on('before-input-event', (event, input) => { 
+    if (win && !win.isDestroyed() && win.webContents.isFocused()) {
+        event.preventDefault(); 
+    }
+});
+
+view.setBounds({ x: 0, y: 85, width: 0, height: 0 });
+view.setAutoResize({ width: true, height: true });
+view.webContents.loadURL(url || 'about:blank');
+
     const tabInfo = { view: view, title: '新标签页' };
 
 view.webContents.on('did-navigate', (e, u) => {
@@ -241,6 +262,11 @@ ipcMain.on('load-url', (e, url) => {
     if (!views[activeTab]) return;
     views[activeTab].view.setBounds(getWebBounds());
     views[activeTab].view.webContents.loadURL(url);
+
+if (win && !win.isDestroyed()) {
+    win.webContents.send('loading-start');
+}
+
 });
 
 ipcMain.on('go-back', () => { if (views[activeTab] && views[activeTab].view.webContents.canGoBack()) views[activeTab].view.webContents.goBack(); });
@@ -329,7 +355,28 @@ app.whenReady().then(() => {
 
 ipcMain.on('toggle-incognito', (e, status) => {
     isIncognito = status;
+    
+    if (isIncognito && views[activeTab]) {
+        const currentView = views[activeTab].view;
+        if (currentView && !currentView.webContents.isDestroyed()) {
+            currentView.webContents.session.clearStorageData();
+            currentView.webContents.session.clearCache();
+        }
+    }
 });
+
+ipcMain.on('hide-webview', () => {
+    if (views[activeTab]) {
+        views[activeTab].view.setBounds({ x: 0, y: 100, width: 0, height: 0 });
+    }
+});
+
+ipcMain.on('show-webview', () => {
+    if (views[activeTab]) {
+        views[activeTab].view.setBounds(getWebBounds());
+    }
+});
+
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();

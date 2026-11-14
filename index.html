@@ -2,12 +2,11 @@
 <html lang="zh-CN">
 <head>
 	<meta charset="UTF-8">
-	<title>Eotne 0.8.1</title>
+	<title>Eotne 0.8.2</title>
 	<style>
 		* { margin: 0; padding: 0; box-sizing: border-box; }
 		body { font-family: "Microsoft YaHei", sans-serif; overflow: hidden; }
 
-		/* ================= 0.8 新增：无痕模式（暗黑主题） ================= */
 		body.incognito { background: #1e1e1e !important; }
 		body.incognito #tabbar, body.incognito #toolbar { background: #2d2d2d !important; border-color: #444 !important; }
 		body.incognito .tab { background: #3c3c3c !important; color: #ccc !important; border-color: #444 !important; }
@@ -83,34 +82,11 @@
 		#add-shortcut-btn { display: inline-block; width: 48px; height: 48px; line-height: 44px; border-radius: 50%; background: #f0f0f0; color: #888; font-size: 24px; text-decoration: none; transition: 0.2s; }
 		#add-shortcut-btn:hover { background: #e0e0e0; }
 
-body.incognito .shortcut div, 
-body.incognito .page-header h2, 
-body.incognito .item a,
-body.incognito .history-item span,
-body.incognito .download-tabs div,
-body.incognito .file-box .name,
-body.incognito .file-box .status {
-    color: #f5f5f5 !important; 
-}
-
-body.incognito .file-box .size,
-body.incognito .file-box .time,
-body.incognito .history-note {
-    color: #b0b0b0 !important; 
-}
-
-body.incognito .empty {
-    color: #888 !important;
-}
-
-body.incognito .btn-close-page,
-body.incognito .add-btn {
-    color: #ccc !important;
-}
 
 	</style>
 </head>
 <body>
+
 	<div id="tabbar">
 		<div id="newtab">+</div>
 	</div>
@@ -205,6 +181,8 @@ body.incognito .add-btn {
 	<script>
 		const ipcRenderer = require('electron').ipcRenderer;
 		window.electronAPI = {
+			hideWebView: () => ipcRenderer.send('hide-webview'),
+			showWebView: () => ipcRenderer.send('show-webview'),
 			loadURL: (url) => ipcRenderer.send('load-url', url),
 			goBack: () => ipcRenderer.send('go-back'),
 			goForward: () => ipcRenderer.send('go-forward'),
@@ -283,18 +261,21 @@ body.incognito .add-btn {
 			document.getElementById('modal-mask').style.display = 'none';
 		}
 
-		function go() {
-			let text = url.value.trim();
-			if (!text) return;
-			if (text.includes('.') && !text.includes(' ')) {
-				if (!text.startsWith('http')) text = 'https://' + text;
-			} else {
-				text = 'https://www.bing.com/search?q=' + encodeURIComponent(text);
-			}
-			window.electronAPI.loadURL(text);
-			setTimeout(() => { document.activeElement.blur(); }, 100);
-		}
+function go() {
+    let text = url.value.trim();
+    if (!text) return;
+    if (text.includes('.') && !text.includes(' ')) {
+        if (!text.startsWith('http')) text = 'https://' + text;
+    } else {
+        text = 'https://www.bing.com/search?q=' + encodeURIComponent(text);
+    }
+    
+    
+    window.electronAPI.loadURL(text);
+    
 
+    setTimeout(() => { document.activeElement.blur(); }, 100);
+}
 		function showPage(name) {
 			document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
 			document.getElementById('error-page').style.display = 'none';
@@ -491,6 +472,7 @@ body.incognito .add-btn {
 					clearTimeout(pressTimer);
 					if (!isLongPress) {
 						const index = el.getAttribute('data-index');
+
 						window.electronAPI.loadURL(customShortcuts[index].url);
 					}
 				};
@@ -605,6 +587,12 @@ body.incognito .add-btn {
 		}
 
 		window.onload = function() {
+
+			document.getElementById('btn-bookmarks').onclick = () => { window.electronAPI.hideWebView(); showPage('bookmarks'); };
+			document.getElementById('btn-history').onclick = () => { window.electronAPI.hideWebView(); showPage('history'); };
+			document.getElementById('btn-downloads').onclick = () => { window.electronAPI.hideWebView(); showPage('downloads'); };
+			document.getElementById('btn-menu').onclick = () => { window.electronAPI.hideWebView(); showPage('menu'); };
+
 			url.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
 			document.getElementById('btn-back').onclick = () => window.electronAPI.goBack();
 			document.getElementById('btn-forward').onclick = () => window.electronAPI.goForward();
@@ -723,6 +711,10 @@ body.incognito .add-btn {
 
 			// 监听后台发送过来的 URL 变化和报错
 			window.electronAPI.onURLChange((newUrl) => {
+
+ 
+        
+
 				url.value = newUrl;
 				if (newUrl === 'about:blank' || newUrl === '') showNewTab();
 				else closeAllPages();
@@ -781,6 +773,7 @@ body.incognito .add-btn {
 			});
 
 			window.electronAPI.onShowError((data) => {
+                                
 				closeAllPages();
 				document.getElementById('error-page').style.display = 'block';
 				document.getElementById('error-title').textContent = data.title;

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 	<meta charset="UTF-8">
-	<title>Eotne 0.8.2</title>
+	<title>Eotne 0.8.3</title>
 	<style>
 		* { margin: 0; padding: 0; box-sizing: border-box; }
 		body { font-family: "Microsoft YaHei", sans-serif; overflow: hidden; }
@@ -38,8 +38,8 @@
 		/* 时钟加入 pointer 提示可长按 */
 		#clock { font-size: 48px; color: #333; margin-bottom: 60px; cursor: pointer; user-select: none; display: inline-block; padding: 10px; }
 		
-		#shortcuts { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; }
-		.shortcut { width: 100px; cursor: pointer; text-align: center; position: relative; -webkit-user-select: none; user-select: none; }
+		#shortcuts { display: grid; grid-template-columns: repeat(4, 1fr); justify-items: center; gap: 20px; max-width: 500px; margin: 0 auto; }
+		.shortcut { width: 80px; cursor: pointer; text-align: center; position: relative; -webkit-user-select: none; user-select: none; }
 		.icon-container { width: 48px; height: 48px; margin: 0 auto 10px auto; display: flex; justify-content: center; align-items: center; }
 		.icon-container img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
 		.icon-text { font-size: 20px; font-weight: bold; color: #3b7ddd; pointer-events: none; }
@@ -647,7 +647,19 @@ function go() {
 			document.getElementById('menu-devtools').onclick = () => window.electronAPI.openDevTools();
 			document.getElementById('btn-retry').onclick = () => window.electronAPI.reload();
 			document.getElementById('btn-gohome').onclick = () => window.electronAPI.loadURL('https://www.bing.com');
-			document.getElementById('add-shortcut-btn').onclick = (e) => { e.preventDefault(); showAddShortcutModal(); };
+			
+document.getElementById('add-shortcut-btn').onclick = (e) => { 
+    e.preventDefault(); 
+    
+    if (customShortcuts.length >= 12) {
+        modal('提示', '快捷方式已达到上限，无法继续添加。', [
+            { text: '好的', action: closeModal }
+        ]);
+        return; 
+    }
+    
+    showAddShortcutModal(); 
+};
 
 			// === 0.8 新增：大时钟的长按事件绑定 ===
 			const clockElement = document.getElementById('clock');

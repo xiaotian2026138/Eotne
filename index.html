@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 	<meta charset="UTF-8">
-	<title>Eotne 0.8.3</title>
+	<title>Eotne 0.8.4</title>
 	<style>
 		* { margin: 0; padding: 0; box-sizing: border-box; }
 		body { font-family: "Microsoft YaHei", sans-serif; overflow: hidden; }
@@ -81,6 +81,25 @@
 		
 		#add-shortcut-btn { display: inline-block; width: 48px; height: 48px; line-height: 44px; border-radius: 50%; background: #f0f0f0; color: #888; font-size: 24px; text-decoration: none; transition: 0.2s; }
 		#add-shortcut-btn:hover { background: #e0e0e0; }
+
+body.incognito .shortcut div, 
+body.incognito .page-header h2, 
+body.incognito .item a,
+body.incognito .history-item span,
+body.incognito .download-tabs div,
+body.incognito .file-box .name,
+body.incognito .file-box .status {
+    color: #f5f5f5 !important; 
+}
+body.incognito .file-box .size,
+body.incognito .file-box .time,
+body.incognito .history-note {
+    color: #b0b0b0 !important; 
+}
+body.incognito .empty { color: #888 !important; }
+body.incognito .btn-close-page, body.incognito .add-btn { color: #ccc !important; }
+
+                #error-page.unsupported .title, #error-page.unsupported .code, #error-page.unsupported .reason { color: #333 !important; }
 
 
 	</style>
@@ -264,18 +283,18 @@
 function go() {
     let text = url.value.trim();
     if (!text) return;
-    if (text.includes('.') && !text.includes(' ')) {
+    if (text.startsWith('file:///') || (text.length > 1 && text[1] === ':')) {
+        text = 'file:///' + text.replace(/\\/g, '/');
+    } else if (text.includes('.') && !text.includes(' ')) {
         if (!text.startsWith('http')) text = 'https://' + text;
     } else {
         text = 'https://www.bing.com/search?q=' + encodeURIComponent(text);
     }
-    
-    
     window.electronAPI.loadURL(text);
-    
 
     setTimeout(() => { document.activeElement.blur(); }, 100);
 }
+
 		function showPage(name) {
 			document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
 			document.getElementById('error-page').style.display = 'none';
@@ -784,19 +803,48 @@ document.getElementById('add-shortcut-btn').onclick = (e) => {
 				modal('提示', msg, [{ text: '好的', action: closeModal }]);
 			});
 
-			window.electronAPI.onShowError((data) => {
-                                
-				closeAllPages();
-				document.getElementById('error-page').style.display = 'block';
-				document.getElementById('error-title').textContent = data.title;
-				document.getElementById('error-code').textContent = '错误代码：' + data.code;
-				document.getElementById('error-reason').textContent = '原因：' + data.reason;
-				document.getElementById('error-advice').textContent = '建议：' + data.advice;
-				document.getElementById('error-url').textContent = '网址：' + data.url;
-			});
+window.electronAPI.onShowError((data) => {
+    closeAllPages();
+    const errorPage = document.getElementById('error-page');
+    
+    // 判断是否是本地文件
+    const supportExts = ['html','htm','png','jpg','jpeg','gif','webp','svg','txt','pdf','mp4','mp3','webm','json','xml'];
+    function getFileExt(urlStr) {
+        const fileName = urlStr.split('/').pop().split('\\').pop();
+        const dotList = fileName.split('.');
+        if (dotList.length < 2) return '';
+        return dotList.pop().toLowerCase();
+    }
+    const ext = getFileExt(data.url);
+    const isLocalFile = data.url && (data.url.startsWith('file:///') || data.url.includes(':\\'));
+    const isUnsupported = isLocalFile && !supportExts.includes(ext);
+    
+    if (isUnsupported) {
+        errorPage.classList.add('unsupported');
+        document.getElementById('error-title').textContent = '此文件为不支持的类型，无法打开。';
+        document.getElementById('error-code').textContent = '';
+        document.getElementById('error-reason').textContent = '请重新选择支持的文件。如果此文件为支持的类型依旧弹出此提示，请反馈。';
+        document.getElementById('error-advice').textContent = '';
+        document.getElementById('error-url').textContent = '文件：' + data.url.replace('file:///', '');
+        document.getElementById('btn-retry').style.display = 'none';
+        document.getElementById('btn-gohome').textContent = '返回';
+    } else {
+        errorPage.classList.remove('unsupported');
+        document.getElementById('error-title').textContent = data.title;
+        document.getElementById('error-code').textContent = '错误代码：' + data.code;
+        document.getElementById('error-reason').textContent = '原因：' + data.reason;
+        document.getElementById('error-advice').textContent = '建议：' + data.advice;
+        document.getElementById('error-url').textContent = '网址：' + data.url;
+        document.getElementById('btn-retry').style.display = 'inline-block';
+        document.getElementById('btn-gohome').textContent = '返回主页';
+    }
+    
+    errorPage.style.display = 'block';
+});
 
-			renderShortcuts();
-		};
+renderShortcuts();
+
+};
 	</script>
 </body>
 </html>
